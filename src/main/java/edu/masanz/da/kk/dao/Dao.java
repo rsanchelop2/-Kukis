@@ -152,29 +152,51 @@ public class Dao {
     public static int eliminarInfoCaducada() {
         // TODO 3. eliminarInfoCaducada
         int counter = 0;
-        for (Map.Entry<String, Kuki> kuki : mapaKukis.entrySet()) {
-            Kuki kuk = kuki.getValue();
-            long now = System.currentTimeMillis();
-            if (now > kuk.getFecha() + kuk.getVida()){
-                mapaKukis.remove(kuk.getId());
-                counter++;
-                mapaSesiones.remove(kuk.getId());
-                mapaUsuarios.put(kuk.getId(), null);
+        long now = System.currentTimeMillis();
+        // Opcion mala - Error al borrar
+//        for (Map.Entry<String, Kuki> kuki : mapaKukis.entrySet()) {
+//            Kuki kuk = kuki.getValue();
+//            if (now > kuk.getFecha() + kuk.getVida()){
+//                mapaKukis.remove(kuk.getId());
+//                counter++;
+//                mapaSesiones.remove(kuk.getId());
+//                mapaUsuarios.put(kuk.getId(), null);
+//            }
+//        }
+
+        // Opcion buena - copiada de la solucion
+        List<String> idsSesionesCaducadas = new ArrayList<>();
+        for (Map.Entry<String, Kuki> entrada : mapaKukis.entrySet()) {
+            Kuki kuki = entrada.getValue();
+            if (now > kuki.getFecha() + kuki.getVida()) {
+                idsSesionesCaducadas.add(entrada.getKey());
             }
         }
-
-        return counter;
+        for (String idSesion : idsSesionesCaducadas) {
+            mapaKukis.remove(idSesion);
+            mapaSesiones.remove(idSesion);
+        }
+        for (Usuario usuario : mapaUsuarios.values()) {
+            if (usuario.getIdSesion() != null && idsSesionesCaducadas.contains(usuario.getIdSesion())) {
+                usuario.setIdSesion(null);
+            }
+        }
+        return idsSesionesCaducadas.size();
     }
 
     public static List<String> obtenerIdsNombresItems() {
         // TODO 4.1 obtenerIdsNombresItems
         List<String> lista = new ArrayList<>();
+        Set<String> listaSet = new TreeSet<>();
         String itemDetails = "";
 
-        for (Map.Entry<String, Item> ite : mapaItems.entrySet()) {
-            Item item = ite.getValue();
-            itemDetails = item.getId() + " - " + item.getNombre() + " " + item.getPrecio();
-            lista.add(itemDetails);
+        for (Item ite : mapaItems.values()) {
+            itemDetails = ite.getId() + " - " + ite.getNombre();
+            listaSet.add(itemDetails);
+        }
+
+        for (String li : listaSet) {
+            lista.add(li);
         }
 
         return lista;
