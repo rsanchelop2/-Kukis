@@ -1,10 +1,21 @@
 package edu.masanz.da.kk.dao;
 
-import java.util.*;
-import edu.masanz.da.kk.model.*;
-import edu.masanz.da.kk.utils.Security;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
-import static edu.masanz.da.kk.conf.Ini.*;
+import static edu.masanz.da.kk.conf.Ini.INTERESES;
+import static edu.masanz.da.kk.conf.Ini.ITEMS;
+import static edu.masanz.da.kk.conf.Ini.KUKIS;
+import static edu.masanz.da.kk.conf.Ini.SUGERENCIAS;
+import static edu.masanz.da.kk.conf.Ini.USUARIOS;
+import edu.masanz.da.kk.model.Item;
+import edu.masanz.da.kk.model.Kuki;
+import edu.masanz.da.kk.model.Usuario;
+import edu.masanz.da.kk.utils.Security;
 
 /**
  * Dao es la clase que simula la base de datos. Contiene colecciones que almacenan los datos y métodos para acceder a ellos.
@@ -204,25 +215,76 @@ public class Dao {
 
     public static boolean filtrarListadoIdNombres(List<String> listado, String filtro) {
         // TODO 4.2 filtrarListadoIdNombres
+        List<String> listaEliminar = new ArrayList<>(listado);
 
-        return true;
+        for (String li : listado) {
+            if (!li.contains(filtro)){
+                listaEliminar.add(li);
+            }
+        }
+        if (!listaEliminar.isEmpty()){
+            for (String li : listaEliminar) {
+                listado.remove(li);
+            }
+            return true;
+        }
+
+        return false;
     }
 
     public static boolean meterItemInteresesUsuario(String idUsuario, String idItem) {
         // TODO 5. meterItemInteresesUsuario
+        if (mapaItems.containsKey(idItem)){
+            return false;
+        }
+        String idSesion = obtenerIdSesionUsuario(idUsuario);
+        Map<String, Object> info = mapaSesiones.get(idSesion);
+        List<String> intereses = new ArrayList<>();
+        if (info.containsKey("intereses")){
+            intereses = (ArrayList<String>) info.get("intereses");
+        }
+        if (!intereses.contains(idItem)){
+            intereses.add(idItem);
+            info.put("intereses", intereses);
+        } else {
+            return false;
+        }
+
         return true;
     }
 
     public static List<String> obtenerItemsInteresantes() {
         // TODO 6. obtenerItemsInteresantes
-        List<String> lista = new ArrayList<>();
-        return lista;
+        Set<String> set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        for (Map<String, Object> value : mapaSesiones.values()) {
+            List<Item> itemsIteresantes = (List<Item>) value.get("intereses");
+            if (itemsIteresantes != null) {
+                for (Item item : itemsIteresantes) {
+                    set.add(item.getNombre());
+                }
+            }
+        }
+        return new ArrayList<>(set);
     }
 
     public static List<String> obtenerItemsNoInteresantes() {
         // TODO 7. obtenerItemsNoInteresantes
-        List<String> lista = new ArrayList<>();
-        return lista;
+        Set<String> idsInteresados = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        for (Map<String, Object> value : mapaSesiones.values()) {
+            List<Item> itemsIteresantes = (List<Item>) value.get("intereses");
+            if (itemsIteresantes != null) {
+                for (Item item : itemsIteresantes) {
+                    idsInteresados.add(item.getId());
+                }
+            }
+        }
+        Set<String> resultado = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        for (Item item : mapaItems.values()) {
+            if (!idsInteresados.contains(item.getId())) {
+                resultado.add(item.getId() + " - " + item.getNombre());
+            }
+        }
+        return new ArrayList<>(resultado);
     }
 
 }
